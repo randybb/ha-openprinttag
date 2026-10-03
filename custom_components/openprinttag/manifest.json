@@ -1,0 +1,14 @@
+{
+  "domain": "openprinttag",
+  "name": "OpenPrintTag",
+  "codeowners": ["@randybb"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/randybb/ha-openprinttag",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/randybb/ha-openprinttag/issues",
+  "requirements": ["cbor2>=5.6"],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}

@@ -1,0 +1,16 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Spools read by ESPHome pn5180 readers (esphome.openprinttag events) get a sensor on the reader's device, with the tag data and the OpenPrintTag database record."
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "spool": {
+        "name": "Spool"
+      }
+    }
+  }
+}
