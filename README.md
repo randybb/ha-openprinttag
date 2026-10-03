@@ -1,7 +1,7 @@
 # OpenPrintTag for Home Assistant
 
 Decodes [OpenPrintTag](https://openprinttag.org/) filament spool tags read by an
-ESPHome reader (the `pn5180` component of
+ESPHome reader (the `pn5180` and `openprinttag` components of
 [randybb/esphome-components](https://github.com/randybb/esphome-components)) and
 looks them up in the [OpenPrintTag database](https://github.com/OpenPrintTag/openprinttag-database).
 
@@ -29,22 +29,18 @@ add the **OpenPrintTag** integration; there is nothing to configure.
 
 ## ESPHome reader
 
-The reader sends the raw OpenPrintTag record as an event:
+The reader sends the raw OpenPrintTag record as an event, with an empty
+`payload` when the tag goes away:
 
 ```yaml
-pn5180:
+openprinttag:
+  id: spool
   on_openprinttag:
     - homeassistant.event:
         event: esphome.openprinttag
         data:
           uid: !lambda return uid;
           payload: !lambda return payload;
-  on_tag_removed:
-    - homeassistant.event:
-        event: esphome.openprinttag
-        data:
-          uid: !lambda return x;
-          payload: ""
 ```
 
 ## Updating the tag
@@ -74,7 +70,7 @@ api:
         uid: string
         aux: string
       then:
-        - lambda: id(pn5180_reader).write_aux(uid, aux);
+        - lambda: id(spool).write_aux(uid, aux);
 ```
 
 The fields, all optional, can be combined in one call:
