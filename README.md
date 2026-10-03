@@ -1,11 +1,11 @@
-= OpenPrintTag for Home Assistant
+# OpenPrintTag for Home Assistant
 
-Decodes https://openprinttag.org/[OpenPrintTag] filament spool tags read by an
+Decodes [OpenPrintTag](https://openprinttag.org/) filament spool tags read by an
 ESPHome reader (the `pn5180` component of
-https://github.com/randybb/esphome-components[randybb/esphome-components]) and
-looks them up in the https://github.com/OpenPrintTag/openprinttag-database[OpenPrintTag database].
+[randybb/esphome-components](https://github.com/randybb/esphome-components)) and
+looks them up in the [OpenPrintTag database](https://github.com/OpenPrintTag/openprinttag-database).
 
-Each reader gets a *Spool* sensor on its device:
+Each reader gets a **Spool** sensor on its device:
 
 * state: brand and material name (`Prusament PETG Jungle Green`), unknown without a tag
 * picture: the material photo from the database
@@ -15,22 +15,21 @@ Each reader gets a *Spool* sensor on its device:
   `database` with the brand, material and package records
 
 Nothing is hardcoded: the field and enum tables come from the
-https://github.com/prusa3d/OpenPrintTag[spec's] `data/*.yaml`, the records from
+[spec's](https://github.com/prusa3d/OpenPrintTag) `data/*.yaml`, the records from
 the database's JSON API (`database.openprinttag.org/api`). Both are fetched on
 first use and kept until HA restarts or the integration is reloaded.
 
-== Installation
+## Installation
 
 HACS custom repository `https://github.com/randybb/ha-openprinttag` (type
 Integration), or copy `custom_components/openprinttag` to the HA config. Then
-add the *OpenPrintTag* integration; there is nothing to configure.
+add the **OpenPrintTag** integration; there is nothing to configure.
 
-== ESPHome reader
+## ESPHome reader
 
 The reader sends the raw OpenPrintTag record as an event:
 
-[source,yaml]
-----
+```yaml
 pn5180:
   on_openprinttag:
     - homeassistant.event:
@@ -44,14 +43,13 @@ pn5180:
         data:
           uid: !lambda return x;
           payload: ""
-----
+```
 
-== Dashboard card
+## Dashboard card
 
 Built-in cards only; the entity IDs are those of a reader named `OpenPrintTag`:
 
-[source,yaml]
-----
+```yaml
 type: vertical-stack
 cards:
   - type: markdown
@@ -79,20 +77,19 @@ cards:
       {% endif %}
   - type: tile
     entity: light.openprinttag_filament_color
-----
+```
 
 `sensor.openprinttag_remaining_weight` and `light.openprinttag_filament_color`
 come from the reader's ESPHome config (`pn5180` sensor, an `rgb` light fed by the
 `primary_color` text sensor), see `mcu-rfid-openprinttag.yaml` in the reader's
 config.
 
-== Testing
+## Testing
 
 The decoder has no HA imports and is checked on the spec's sample tag:
 
-[source,sh]
-----
+```sh
 pip install cbor2 pyyaml
 git clone https://github.com/prusa3d/OpenPrintTag /tmp/OpenPrintTag
 python tests/test_openprinttag.py /tmp/OpenPrintTag
-----
+```
