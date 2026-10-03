@@ -77,6 +77,82 @@ api:
         - lambda: id(pn5180_reader).write_aux(uid, aux);
 ```
 
+The fields, all optional, can be combined in one call:
+
+| Field | Writes |
+|---|---|
+| `consumed_weight` | the consumed weight, g |
+| `consume` | adds to the consumed weight, g (negative takes back) |
+| `gross_weight` | the consumed weight from the spool weighed with its container: full weight + empty container weight − `gross_weight` (both weights from the tag) |
+| `storage_location` | where the spool is kept, empty text removes it |
+| `workgroup` | who the spool belongs to, empty text removes it |
+
+The spool has to be on the reader: the action fails when its tag is not there.
+The sensor shows the new values a moment later, once the reader has read the
+tag back.
+
+### From a dashboard
+
+**Developer tools → Actions** runs it by hand. On a dashboard, a button with a
+fixed value:
+
+```yaml
+type: button
+name: Used 10 g
+icon: mdi:minus-circle-outline
+tap_action:
+  action: perform-action
+  perform_action: openprinttag.update
+  target:
+    entity_id: sensor.openprinttag_spool
+  data:
+    consume: 10
+```
+
+For a value typed in (e.g. the spool on a kitchen scale), a number helper, a
+script that writes it and both on a dashboard; dashboard actions do not take
+templates, the script does. Create the helper in **Settings → Devices &
+services → Helpers → Number** (here `input_number.spool_weight`, 0–5000 g,
+display mode input field), then the script:
+
+```yaml
+# scripts.yaml
+openprinttag_weigh:
+  alias: Write the weighed spool to the tag
+  icon: mdi:scale
+  sequence:
+    - action: openprinttag.update
+      target:
+        entity_id: sensor.openprinttag_spool
+      data:
+        gross_weight: "{{ states('input_number.spool_weight') | float }}"
+```
+
+```yaml
+type: entities
+title: Weigh the spool
+entities:
+  - entity: input_number.spool_weight
+    name: Weight with the container
+  - entity: script.openprinttag_weigh
+    name: Write to the tag
+```
+
+Set `consumed_weight` or `consume` in the script instead for those.
+
+### From an automation
+
+E.g. the filament a print used, from a printer integration:
+
+```yaml
+actions:
+  - action: openprinttag.update
+    target:
+      entity_id: sensor.openprinttag_spool
+    data:
+      consume: "{{ states('sensor.printer_filament_used') | float(0) }}"
+```
+
 ## Dashboard card
 
 The integration brings its own card, nothing to install: in a dashboard,
