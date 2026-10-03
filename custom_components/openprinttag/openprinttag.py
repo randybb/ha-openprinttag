@@ -81,6 +81,43 @@ def decode(payload: bytes, spec: Spec) -> dict[str, dict[str, Any]]:
     return result
 
 
+def _aux_region(payload: bytes) -> tuple[int, int]:
+    """Offset and size of the aux region in the payload, as the meta section says."""
+    stream = io.BytesIO(payload)
+    meta = cbor2.CBORDecoder(stream).decode()
+    if not isinstance(meta, dict) or 2 not in meta:
+        raise ValueError("the tag has no aux region")
+    main, aux = meta.get(0, stream.tell()), meta[2]
+    end = main if main > aux else len(payload)
+    return aux, min(meta.get(3, end - aux), end - aux)
+
+
+def encode_aux(payload: bytes, updates: dict[str, Any], spec: Spec) -> bytes:
+    """The aux region with `updates` (field name -> value, None removes it) applied.
+
+    Fields not touched, unknown ones included, are kept as they are, as the spec requires.
+    """
+    offset, size = _aux_region(payload)
+    try:
+        aux = cbor2.CBORDecoder(io.BytesIO(payload[offset : offset + size])).decode()
+    except (cbor2.CBORDecodeError, ValueError):
+        aux = {}
+    if not isinstance(aux, dict):
+        aux = {}
+    keys = {f["name"]: key for key, f in spec.fields.get("aux", {}).items()}
+    for name, value in updates.items():
+        if name not in keys:
+            raise ValueError(f"unknown aux field {name}")
+        if value is None:
+            aux.pop(keys[name], None)
+        else:
+            aux[keys[name]] = int(value) if isinstance(value, float) and value.is_integer() else value
+    data = cbor2.dumps(aux, canonical=True)
+    if len(data) > size:
+        raise ValueError(f"aux data of {len(data)} B does not fit the {size} B region")
+    return data
+
+
 def derive_uuids(main: dict[str, Any], tag_uid: str) -> dict[str, str]:
     """UUIDs of the tag, derived as the spec says when the tag does not carry them."""
     out = {}

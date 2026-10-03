@@ -1,0 +1,33 @@
+update:
+  target:
+    entity:
+      integration: openprinttag
+      domain: sensor
+  fields:
+    consumed_weight:
+      selector:
+        number:
+          min: 0
+          max: 10000
+          unit_of_measurement: g
+          mode: box
+    consume:
+      selector:
+        number:
+          min: -10000
+          max: 10000
+          unit_of_measurement: g
+          mode: box
+    gross_weight:
+      selector:
+        number:
+          min: 0
+          max: 20000
+          unit_of_measurement: g
+          mode: box
+    storage_location:
+      selector:
+        text:
+    workgroup:
+      selector:
+        text:

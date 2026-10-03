@@ -12,10 +12,11 @@ from homeassistant.components.lovelace.resources import ResourceStorageCollectio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.helpers import config_validation as cv, service
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN
+from .const import DOMAIN, UPDATE_SCHEMA
 from .data import OpenPrintTagData
 
 PLATFORMS = [Platform.SENSOR]
@@ -33,6 +34,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     url = f"{CARD_URL}?v={version}"  # the hash busts the browser cache on updates
     if not await _add_lovelace_resource(hass, url):
         add_extra_js_url(hass, url)
+    service.async_register_platform_entity_service(
+        hass, DOMAIN, "update", entity_domain=SENSOR_DOMAIN, schema=UPDATE_SCHEMA, func="async_update_tag"
+    )
     return True
 
 

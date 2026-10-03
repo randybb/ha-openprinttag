@@ -36,4 +36,21 @@ uuids = derive_uuids({"brand_name": "Prusament", "material_name": "PETG Jungle G
 assert uuids["brand_uuid"] == "ae5ff34e-298e-50c9-8f77-92a97fb30b09"
 assert uuids["material_uuid"] == "481944dd-8319-5d9e-b4fa-d63d7da86f55"
 assert uuids["instance_uuid"] == derive_uuids({}, "e0040108662f6fbc")["instance_uuid"]
+# Aux update: consumed_weight changed, unknown keys kept, region size respected
+from openprinttag import encode_aux  # noqa: E402
+import cbor2  # noqa: E402
+
+payload = mem[42 : 42 + 261]
+raw = bytearray(payload)
+raw[226 : 226 + 6] = cbor2.dumps({0: 100, 99: [1, 2]}, canonical=True)  # plus a future, unknown key
+new = encode_aux(bytes(raw), {"consumed_weight": 250.0, "storage_location": "Shelf A"}, spec)
+assert cbor2.loads(new) == {0: 250, 4: "Shelf A", 99: [1, 2]}, cbor2.loads(new)
+raw[226 : 226 + len(new)] = new
+assert decode(bytes(raw), spec)["aux"] == {"consumed_weight": 250, "storage_location": "Shelf A", "99": [1, 2]}
+assert cbor2.loads(encode_aux(bytes(raw), {"storage_location": None}, spec)) == {0: 250, 99: [1, 2]}
+try:
+    encode_aux(payload, {"storage_location": "x" * 40}, spec)
+    raise AssertionError("oversized aux accepted")
+except ValueError:
+    pass
 print("ok")

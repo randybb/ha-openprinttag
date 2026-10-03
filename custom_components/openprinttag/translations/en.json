@@ -12,5 +12,33 @@
         "name": "Spool"
       }
     }
+  },
+  "services": {
+    "update": {
+      "name": "Update spool",
+      "description": "Writes values to the aux region of the OpenPrintTag on the reader (only the changed blocks). The sensor updates when the reader has read the tag again.",
+      "fields": {
+        "consumed_weight": {
+          "name": "Consumed weight",
+          "description": "Filament used so far."
+        },
+        "consume": {
+          "name": "Consume",
+          "description": "Filament used now, added to the consumed weight (e.g. after a print)."
+        },
+        "gross_weight": {
+          "name": "Gross weight",
+          "description": "The spool weighed with its container; the consumed weight is computed from the tag's full and empty spool weights."
+        },
+        "storage_location": {
+          "name": "Storage location",
+          "description": "Where the spool is kept. Empty removes it."
+        },
+        "workgroup": {
+          "name": "Workgroup",
+          "description": "Who the spool belongs to. Empty removes it."
+        }
+      }
+    }
   }
 }

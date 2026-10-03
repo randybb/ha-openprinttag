@@ -47,6 +47,36 @@ pn5180:
           payload: ""
 ```
 
+## Updating the tag
+
+`openprinttag.update` writes values to the aux region of the tag on the reader,
+keeping every other field (unknown ones too); only the changed blocks are
+written, then the reader reads the tag again and the sensor shows what is on it.
+
+```yaml
+action: openprinttag.update
+target:
+  entity_id: sensor.openprinttag_spool
+data:
+  consume: 23.5          # used by a print, added to consumed_weight
+  # consumed_weight: 250 # or set it
+  # gross_weight: 812    # or weigh the spool with its container
+  storage_location: Shelf A  # empty text removes it
+```
+
+The reader needs an API action for it:
+
+```yaml
+api:
+  actions:
+    - action: openprinttag_write_aux
+      variables:
+        uid: string
+        aux: string
+      then:
+        - lambda: id(pn5180_reader).write_aux(uid, aux);
+```
+
 ## Dashboard card
 
 The integration brings its own card, nothing to install: in a dashboard,
