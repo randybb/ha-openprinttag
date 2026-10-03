@@ -72,7 +72,11 @@ async def async_setup_entry(
 
 
 class SpoolSensor(SensorEntity, RestoreEntity):
-    """The spool on the reader: brand and material name, all tag fields and the database record."""
+    """The spool on the reader: brand and material name, all tag fields and the database record.
+
+    When the tag is removed the state goes unknown but the attributes stay, with
+    on_reader false, so a dashboard can keep showing the last spool.
+    """
 
     _attr_has_entity_name = True
     _attr_translation_key = "spool"
@@ -87,9 +91,9 @@ class SpoolSensor(SensorEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         last = await self.async_get_last_state()
-        if self._got_event or last is None or last.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+        if self._got_event or last is None or last.state == STATE_UNAVAILABLE:
             return
-        self._attr_native_value = last.state
+        self._attr_native_value = None if last.state == STATE_UNKNOWN else last.state
         self._attr_entity_picture = last.attributes.get("entity_picture")
         self._attr_extra_state_attributes = {k: v for k, v in last.attributes.items() if k not in _OWN_ATTRIBUTES}
 
@@ -98,13 +102,13 @@ class SpoolSensor(SensorEntity, RestoreEntity):
         self._got_event = True
         if tag is None:
             self._attr_native_value = None
-            self._attr_entity_picture = None
-            self._attr_extra_state_attributes = {}
+            if self._attr_extra_state_attributes:
+                self._attr_extra_state_attributes = {**self._attr_extra_state_attributes, "on_reader": False}
         else:
             photos = (db or {}).get("material", {}).get("photos") or []
             name = " ".join(str(tag[k]) for k in ("brand_name", "material_name") if k in tag)
             self._attr_native_value = name or tag["uid"]
             self._attr_entity_picture = photos[0].get("url") if photos else None
-            self._attr_extra_state_attributes = {**tag, "database": db or {}}
+            self._attr_extra_state_attributes = {**tag, "database": db or {}, "on_reader": True}
         if self.hass is not None:  # not yet added: HA writes the state when it is
             self.async_write_ha_state()

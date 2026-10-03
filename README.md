@@ -12,7 +12,9 @@ Each reader gets a **Spool** sensor on its device:
 * attributes: every field of the tag by its spec name (main and aux region, enums
   as names, colors as `#rrggbb`, dates as ISO), the tag UID, the brand, material,
   package and instance UUIDs (derived as the spec says when the tag has none) and
-  `database` with the brand, material and package records
+  `database` with the brand, material and package records, and `on_reader`
+  (when the tag is removed the state goes unknown, the attributes stay with
+  `on_reader: false`)
 
 Nothing is hardcoded: the field and enum tables come from the
 [spec's](https://github.com/prusa3d/OpenPrintTag) `data/*.yaml`, the records from
@@ -47,42 +49,18 @@ pn5180:
 
 ## Dashboard card
 
-Built-in cards only; the entity IDs are those of a reader named `OpenPrintTag`:
+The integration brings its own card, nothing to install: in a dashboard,
+**Add card → OpenPrintTag Spool** and pick the reader's Spool sensor.
 
 ```yaml
-type: vertical-stack
-cards:
-  - type: markdown
-    content: |
-      {% set s = 'sensor.openprinttag_spool' %}
-      {% if not has_value(s) %}
-      No spool on the reader.
-      {% else %}
-      {% set a = states[s].attributes %}
-      {% set full = a.actual_netto_full_weight | default(a.nominal_netto_full_weight) %}
-      {% set length = a.actual_full_length | default(a.nominal_full_length) | default(0) %}
-      {% set left = states('sensor.openprinttag_remaining_weight') | float(0) %}
-      <img src="{{ a.entity_picture }}" width="110" align="right">
-
-      ## {{ states(s) }}
-      **{{ a.material_type }}** · {{ a.filament_diameter | default('–') }} mm · {{ a.primary_color | default('') }}
-
-      | | |
-      |---|---|
-      | Print | {{ a.min_print_temperature | default('–') }}–{{ a.max_print_temperature | default('–') }} °C |
-      | Bed | {{ a.min_bed_temperature | default('–') }}–{{ a.max_bed_temperature | default('–') }} °C |
-      | Chamber | {{ a.chamber_temperature | default('–') }} °C |
-      | Left | {{ left | round(0) }} g of {{ full }} g{% if length and full %} · ~{{ (length * left / full / 1000) | round(0) }} m{% endif %} |
-      | Made | {{ as_datetime(a.manufactured_date).date() if a.manufactured_date is defined else '–' }} |
-      {% endif %}
-  - type: tile
-    entity: light.openprinttag_filament_color
+type: custom:openprinttag-card
+entity: sensor.openprinttag_spool
+sticky: true  # keep showing the last spool, dimmed, after its tag is removed
 ```
 
-`sensor.openprinttag_remaining_weight` and `light.openprinttag_filament_color`
-come from the reader's ESPHome config (`pn5180` sensor, an `rgb` light fed by the
-`primary_color` text sensor), see `mcu-rfid-openprinttag.yaml` in the reader's
-config.
+It shows the filament color, the material photo, the remaining filament
+(full weight minus `consumed_weight` from the tag, and the length from it),
+the temperatures and the tag's tags and certifications.
 
 ## Testing
 
